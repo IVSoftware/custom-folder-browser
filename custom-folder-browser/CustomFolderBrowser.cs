@@ -33,7 +33,6 @@ namespace CustomFolder
             // Load the icons from resources (make sure these are 16x16 size)
             expandIcon = Properties.Resources.icons8_forward_8; // Right-facing arrow
             collapseIcon = Properties.Resources.icons8_expand_arrow_8; // Down-facing arrow
-
 #endif
 
             // Enable owner drawing for the TreeView in DoubleBufferredTreeView class
@@ -210,11 +209,55 @@ namespace CustomFolder
 
     public class DoubleBufferedTreeView : TreeView
     {
-
-#if !USE_FONTELLO
-            private Image expandIcon;
-            private Image collapseIcon;
+#if false
+        collapsedGlyph = "\u25B8";
+        expandedGlyph = "\u25BE";
 #endif
+#if !USE_FONTELLO
+        private Image expandIcon 
+        { 
+            get
+            {
+                if(_expandIcon is null)
+                {
+                    _expandIcon = DrawFromUnicode("\u25B8");
+                }
+                return _expandIcon;
+            }
+            set => _expandIcon = value;
+        }
+        Image? _expandIcon = null;
+        private Image collapseIcon
+        {
+            get
+            {
+                if(_collapseIcon is null)
+                {
+                   _collapseIcon = DrawFromUnicode("\u25BE");
+                }
+                return _collapseIcon;
+            }
+            set => _collapseIcon = value;
+        }
+        Image? _collapseIcon = null;
+#endif
+        private Image DrawFromUnicode(string glyph)
+        {
+            var iconBitmap = new Bitmap(16,16);
+            var drawRect = new Rectangle(0,0,16,16);
+
+            using (var iconGraphics = Graphics.FromImage(iconBitmap))
+            using (var stringFormat = new StringFormat(StringFormat.GenericTypographic))
+            using (var font = new Font("Consolas", 14F, FontStyle.Regular))
+            {
+                stringFormat.Alignment = stringFormat.LineAlignment = StringAlignment.Center;
+
+                iconGraphics.Clear(Color.Transparent);
+                iconGraphics.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
+                iconGraphics.DrawString(glyph, font, Brushes.CornflowerBlue, drawRect, stringFormat);
+            }
+            return iconBitmap;
+        }
         public DoubleBufferedTreeView()
         {
             // Enable double buffering
