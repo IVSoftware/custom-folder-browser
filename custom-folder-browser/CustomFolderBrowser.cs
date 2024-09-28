@@ -236,6 +236,8 @@ namespace CustomFolder
             base.WndProc(ref m);
         }
         public FontFamily IconFontFamily { get; }
+
+
         protected override void OnDrawNode(DrawTreeNodeEventArgs e)
         {
             if (e.Node is null || e.Bounds.Width == 0 || e.Bounds.Height == 0)
@@ -246,7 +248,6 @@ namespace CustomFolder
             }
             // Get the bounds of the node
             var metrics = GetNodeMetrics(e);
-            Rectangle nodeRect = e.Node.Bounds;
 
             // Clear the icon area before redrawing
             e.Graphics.FillRectangle(Brushes.Azure, e.Bounds);  // Clear previous drawing
@@ -254,14 +255,13 @@ namespace CustomFolder
             /*--------- 1. Draw expand/collapse icon ---------*/
             if (e.Node.Nodes.Count > 0)
             {
-                nodeRect.X = metrics.IconBounds.Left;
 #if USE_FONTELLO
                 localDrawIcon(
                     glyph: e.Node.IsExpanded ? "\uE800" : "\uE801",
                     fontFamily: "fontello-custom-plusminus-fonts",
                     bounds: new(
-                        new Point(e.Node.Level * Indent, nodeRect.Top),
-                        new Size(metrics.IconBounds.Width, nodeRect.Height)),
+                        new Point(e.Node.Level * Indent, metrics.IconBounds.Top),
+                        new Size(metrics.IconBounds.Width, metrics.IconBounds.Height)),
                     foreColor_: Color.Black);
 #else
                     // Calculate position for expand/collapse icon
@@ -273,8 +273,8 @@ namespace CustomFolder
                 e.Graphics.DrawImage(expandCollapseImg, ptExpand);
 #endif
             }
-            return;
 
+#if false     
             /*--------- 2. Draw node text ---------*/
             // Get the node's font (default if none is set)
             Font nodeFont = e.Node.NodeFont ?? Font;
@@ -317,6 +317,7 @@ namespace CustomFolder
             {
                 ControlPaint.DrawFocusRectangle(e.Graphics, e.Bounds);
             }
+#endif      
 
             #region L o c a l M e t h o d s
             int localDrawIcon(
@@ -359,6 +360,7 @@ namespace CustomFolder
             }
             #endregion L o c a l M e t h o d s
         }
+        [DebuggerDisplay("{IconBounds.X} {IconBounds.Y} {IconBounds.Width} {IconBounds.Height}  {LabelBounds.X} {LabelBounds.Y} {LabelBounds.Width} {LabelBounds.Height} ")]
         class NodeMetrics
         {
             /// <summary>
@@ -399,8 +401,7 @@ namespace CustomFolder
                             ).Width)),
                     plusMinusIndent = indent + iconWidth,
                     labelIndent = plusMinusIndent + iconWidth,
-                    rightOfLabelIndent = labelIndent + textWidth,
-                    top = node.Index * ItemHeight;
+                    rightOfLabelIndent = labelIndent + textWidth;
                 Debug.Assert(iconWidth > 0);
                 return new NodeMetrics
                 {
@@ -412,12 +413,12 @@ namespace CustomFolder
                     //TextWidth = textWidth,
                     IconBounds = new Rectangle(
                         x: indent,
-                        y: top,
+                        y: node.Bounds.Top,
                         width: iconWidth,
                         height: node.Bounds.Height),
                     LabelBounds = new Rectangle(
                         x: plusMinusIndent,
-                        y: top,
+                        y: node.Bounds.Top,
                         width: textWidth,
                         height: ItemHeight),
                 };
