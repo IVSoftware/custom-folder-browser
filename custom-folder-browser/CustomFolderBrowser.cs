@@ -36,6 +36,7 @@ namespace CustomFolder
         {
             InitializeComponents();
             ClientSize = new Size(578, 744);
+            DoubleBuffered = true;
             okButton.Enabled = false;
             this.StartPosition = FormStartPosition.CenterScreen;
 
