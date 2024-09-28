@@ -262,8 +262,11 @@ namespace CustomFolder
                     bounds: metrics.IconBounds,
                     foreColor_: Color.Black);
 #else
-                    // Calculate position for expand/collapse icon
-                    Point ptExpand = new Point(nodeRect.Left - 16, nodeRect.Top + (nodeRect.Height - 16) / 2); // Align vertically
+                
+                // Get the bounds of the node
+                Rectangle nodeRect = e.Node.Bounds;
+                // Calculate position for expand/collapse icon
+                Point ptExpand = new Point(nodeRect.Left - 16, nodeRect.Top + (nodeRect.Height - 16) / 2); // Align vertically
 
                 // Draw the icon (ensure it is redrawn over a clear background)
                 // Choose the appropriate icon
@@ -272,7 +275,7 @@ namespace CustomFolder
 #endif
             }
 
-#if false     
+#if false
             /*--------- 2. Draw node text ---------*/
             // Get the node's font (default if none is set)
             Font nodeFont = e.Node.NodeFont ?? Font;
@@ -315,8 +318,9 @@ namespace CustomFolder
             {
                 ControlPaint.DrawFocusRectangle(e.Graphics, e.Bounds);
             }
-#endif      
+#endif
 
+#if USE_FONTELLO
             #region L o c a l M e t h o d s
             int localDrawIcon(
                     string glyph,
@@ -357,6 +361,7 @@ namespace CustomFolder
                 return bounds.Width;
             }
             #endregion L o c a l M e t h o d s
+#endif
         }
         [DebuggerDisplay("{IconBounds.X} {IconBounds.Y} {IconBounds.Width} {IconBounds.Height}  {LabelBounds.X} {LabelBounds.Y} {LabelBounds.Width} {LabelBounds.Height} ")]
         class NodeMetrics
@@ -381,7 +386,7 @@ namespace CustomFolder
             }
             var node = e.Node;
             var ambientFont = node.NodeFont ?? Font;
-            using (var iconFont = new Font(IconFontFamily, ambientFont.Size, ambientFont.Style))
+            using (var iconFont = new Font(IconFontFamily ?? ambientFont.FontFamily, ambientFont.Size, ambientFont.Style))
             {
                 int
                     indent = node.Level * Indent,
