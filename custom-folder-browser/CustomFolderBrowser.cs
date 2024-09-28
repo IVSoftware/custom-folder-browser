@@ -259,9 +259,7 @@ namespace CustomFolder
                 localDrawIcon(
                     glyph: e.Node.IsExpanded ? "\uE800" : "\uE801",
                     fontFamily: "fontello-custom-plusminus-fonts",
-                    bounds: new(
-                        new Point(e.Node.Level * Indent, metrics.IconBounds.Top),
-                        new Size(metrics.IconBounds.Width, metrics.IconBounds.Height)),
+                    bounds: metrics.IconBounds,
                     foreColor_: Color.Black);
 #else
                     // Calculate position for expand/collapse icon
@@ -386,7 +384,7 @@ namespace CustomFolder
             using (var iconFont = new Font(IconFontFamily, ambientFont.Size, ambientFont.Style))
             {
                 int
-                    indent = node.Level * node.TreeView.Width,
+                    indent = node.Level * Indent,
                     iconWidth = Convert.ToInt32(
                         Math.Ceiling(
                             e.Graphics.MeasureString(
