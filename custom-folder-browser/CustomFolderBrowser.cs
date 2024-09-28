@@ -303,7 +303,7 @@ namespace CustomFolder
                     glyph: e.Node.IsExpanded ? "\uE800" : "\uE801",
                     fontFamily: "fontello-custom-plusminus-fonts",
                     bounds: metrics.IconBounds,
-                    foreColor_: Color.Black);
+                    foreColor_: Color.CornflowerBlue);
 #else
                 
                 // Get the bounds of the node
@@ -379,7 +379,7 @@ namespace CustomFolder
                     fontFamily = $"{fontFamily}.ttf";
                 }
                 var ambientFont = e.Node.NodeFont ?? Font;
-                using (var iconFont = new Font(LoadFamilyFromEmbeddedFont(fontFamily), ambientFont.Size, ambientFont.Style))
+                using (var iconFont = new Font(LoadFamilyFromEmbeddedFont(fontFamily), ambientFont.Size + 2F, ambientFont.Style))
                 {
                     var foreColor = foreColor_ ?? ForeColor;
                     var backColor = backColor_ ?? BackColor;

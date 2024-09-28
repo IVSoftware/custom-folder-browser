@@ -9,7 +9,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>$(DefineConstants);USE_FONTELLO</DefineConstants>
+  </PropertyGroup>
 
   <ItemGroup>
     <None Remove="Fonts\fontello-custom-plusminus-fonts.ttf" />
