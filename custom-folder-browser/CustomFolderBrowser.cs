@@ -245,6 +245,7 @@ namespace CustomFolder
                 return;
             }
             // Get the bounds of the node
+            var metrics = GetNodeMetrics(e);
             Rectangle nodeRect = e.Node.Bounds;
 
             // Clear the icon area before redrawing
@@ -253,14 +254,14 @@ namespace CustomFolder
             /*--------- 1. Draw expand/collapse icon ---------*/
             if (e.Node.Nodes.Count > 0)
             {
-
+                nodeRect.X = metrics.IconBounds.Left;
 #if USE_FONTELLO
-                nodeRect.X = (Indent * e.Node.Level) + localDrawIcon(
+                localDrawIcon(
                     glyph: e.Node.IsExpanded ? "\uE800" : "\uE801",
                     fontFamily: "fontello-custom-plusminus-fonts",
                     bounds: new(
                         new Point(e.Node.Level * Indent, nodeRect.Top),
-                        new Size(e.Node.GetWidthMetrics(e.Graphics).IconWidth, nodeRect.Height)),
+                        new Size(metrics.IconBounds.Width, nodeRect.Height)),
                     foreColor_: Color.Black);
 #else
                     // Calculate position for expand/collapse icon
@@ -272,6 +273,7 @@ namespace CustomFolder
                 e.Graphics.DrawImage(expandCollapseImg, ptExpand);
 #endif
             }
+            return;
 
             /*--------- 2. Draw node text ---------*/
             // Get the node's font (default if none is set)
@@ -357,8 +359,72 @@ namespace CustomFolder
             }
             #endregion L o c a l M e t h o d s
         }
-        TreeViewHitTestInfo _customHitTestInfo;
+        class NodeMetrics
+        {
+            /// <summary>
+            /// X Coodinate where hit begins
+            /// </summary>
+            //public int Indent { get; init; }
+            //public int PlusMinusIndent { get; init; }
+            //public int LabelIndent { get; init; }
+            //public int RightOfLabelIndent { get; init; }
+            //public int IconWidth { get; init; }
+            //public int TextWidth { get; init; }
+            public Rectangle IconBounds { get; init; }
+            public Rectangle LabelBounds { get; init; }
+        }
+        NodeMetrics GetNodeMetrics(DrawTreeNodeEventArgs? e)
+        {
+            if (e?.Node is null)
+            {
+                return new NodeMetrics();
+            }
+            var node = e.Node;
+            var ambientFont = node.NodeFont ?? Font;
+            using (var iconFont = new Font(IconFontFamily, ambientFont.Size, ambientFont.Style))
+            {
+                int
+                    indent = node.Level * node.TreeView.Width,
+                    iconWidth = Convert.ToInt32(
+                        Math.Ceiling(
+                            e.Graphics.MeasureString(
+                                "\uE800",
+                                iconFont
+                            ).Width)),
+                    textWidth = Convert.ToInt32(
+                Math.Ceiling(
+                            e.Graphics.MeasureString(
+                                node.Text,
+                                ambientFont
+                            ).Width)),
+                    plusMinusIndent = indent + iconWidth,
+                    labelIndent = plusMinusIndent + iconWidth,
+                    rightOfLabelIndent = labelIndent + textWidth,
+                    top = node.Index * ItemHeight;
+                Debug.Assert(iconWidth > 0);
+                return new NodeMetrics
+                {
+                    //Indent = indent,
+                    //PlusMinusIndent = plusMinusIndent,
+                    //LabelIndent = 0,
+                    //RightOfLabelIndent = 0,
+                    //IconWidth = iconWidth,
+                    //TextWidth = textWidth,
+                    IconBounds = new Rectangle(
+                        x: indent,
+                        y: top,
+                        width: iconWidth,
+                        height: node.Bounds.Height),
+                    LabelBounds = new Rectangle(
+                        x: plusMinusIndent,
+                        y: top,
+                        width: textWidth,
+                        height: ItemHeight),
+                };
+            }
+        }
 #if USE_FONTELLO
+        TreeViewHitTestInfo _customHitTestInfo;
         protected override void OnMouseDown(MouseEventArgs e)
         {
             base.OnMouseDown(e);
@@ -375,20 +441,28 @@ namespace CustomFolder
             }
             else
             {
-                var metrics = bcHitTestInfo.Node.GetWidthMetrics();
-                switch (point.X)
+                using (var graphics = CreateGraphics())
                 {
-                    case int x when x < metrics.Indent:
-                        location = TreeViewHitTestLocations.LeftOfClientArea;
-                        break;
-                    case int x when x < metrics.LabelIndent:
-                        location = TreeViewHitTestLocations.PlusMinus;
-                        break;
-                    default:
-                        location = TreeViewHitTestLocations.None;
-                        break;
+                    var metrics = GetNodeMetrics(new DrawTreeNodeEventArgs(
+                        graphics: graphics,
+                        node: bcHitTestInfo.Node,
+                        bounds: new(),
+                        state: TreeNodeStates.Default
+                    ));
+                    switch (point.X)
+                    {
+                        case int x when x < metrics.IconBounds.Left:
+                            location = TreeViewHitTestLocations.LeftOfClientArea;
+                            break;
+                        case int x when x < metrics.LabelBounds.Left:
+                            location = TreeViewHitTestLocations.PlusMinus;
+                            break;
+                        default:
+                            location = TreeViewHitTestLocations.None;
+                            break;
+                    }
+                    return new TreeViewHitTestInfo(GetNodeAt(point), location);
                 }
-                return new TreeViewHitTestInfo(GetNodeAt(point), location);
             }
         }
 
@@ -453,68 +527,6 @@ namespace CustomFolder
             public int TextWidth { get; init; }
             public Rectangle IconBounds { get; init; }
             public Rectangle TextBounds { get; init; }
-        }
-        public static NodeWidthMetrics GetWidthMetrics(this TreeNode node, Graphics? graphics = null)
-        {
-            if (node.TreeView is DoubleBufferedTreeView treeView)
-            {
-                if (graphics is null)
-                {
-                    using (var adhoc = node.TreeView.CreateGraphics())
-                    {
-                        return localGetWidthMetrics(adhoc);
-                    }
-                }
-                else return localGetWidthMetrics(graphics);
-
-                NodeWidthMetrics localGetWidthMetrics(Graphics g)
-                {
-                    var ambientFont = node.NodeFont ?? treeView.Font;
-                    using (var iconFont = new Font(treeView.IconFontFamily, ambientFont.Size, ambientFont.Style))
-                    {
-                        int
-                            indent = node.Level * node.TreeView.Width,
-                            iconWidth = Convert.ToInt32(
-                                Math.Ceiling(
-                                    g.MeasureString(
-                                        "\uE800",
-                                        iconFont
-                                    ).Width)),
-                            textWidth = Convert.ToInt32(
-                                Math.Ceiling(
-                                    g.MeasureString(
-                                        node.Text,
-                                        ambientFont
-                                    ).Width)),
-                            plusMinusIndent = indent + iconWidth,
-                            labelIndent = plusMinusIndent + iconWidth,
-                            rightOfLabelIndent = labelIndent + textWidth;
-                        return new NodeWidthMetrics
-                        {
-                            Indent = indent,
-                            PlusMinusIndent = plusMinusIndent,
-                            LabelIndent = 0,
-                            RightOfLabelIndent = 0,
-                            IconWidth = iconWidth,
-                            TextWidth = textWidth,
-                            IconBounds = new Rectangle(
-                                x: indent,
-                                y: node.Bounds.Top,
-                                width: iconWidth,
-                                height: node.Bounds.Height),
-                            TextBounds = new Rectangle(
-                                x: plusMinusIndent,
-                                y: node.Bounds.Top,
-                                width: textWidth,
-                                height: node.Bounds.Height),
-                        };
-                    }
-                }
-            }
-            else
-            {
-                return new NodeWidthMetrics();
-            }
         }
     }
 }
