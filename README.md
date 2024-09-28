@@ -1,1 +1,1 @@
-This sample is derived from code publicly posted here https://stackoverflow.com/q/79030550/5438626 authored by user Daniel Lip.
+This sample is derived from code publicly posted here https://stackoverflow.com/q/79030550/5438626 authored by StackOverflow user Daniel Lip.
