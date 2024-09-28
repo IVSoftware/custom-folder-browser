@@ -122,7 +122,7 @@ namespace CustomFolder
             tableLayoutPanel.Controls.Add(okButton, 1, 0);
             tableLayoutPanel.Controls.Add(cancelButton, 2, 0);
 
-            //Controls.Add(feedbackLabel);
+            Controls.Add(feedbackLabel);
         }
 
         private void LoadDrives()
