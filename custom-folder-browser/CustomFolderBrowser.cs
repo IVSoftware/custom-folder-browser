@@ -14,12 +14,22 @@ namespace CustomFolder
 {
     public partial class CustomFolderBrowser : Form
     {
-        private TreeView folderTreeView;
+        private TreeView folderTreeView = new DoubleBufferedTreeView
+        {
+            Size = new Size(290, 208),
+            Location = new Point(12, 55),
+            Dock = DockStyle.Fill,
+        };
+        private TableLayoutPanel tableLayoutPanel = new TableLayoutPanel
+        {
+            Dock = DockStyle.Bottom,
+            ColumnCount = 3,
+            Height = 50,
+        };
         private Button okButton;
         private Button cancelButton;
         private Button makeNewFolderButton;
         private BufferedLabel feedbackLabel;
-
         public string SelectedPath { get; private set; }
 
         public CustomFolderBrowser()
@@ -63,13 +73,6 @@ namespace CustomFolder
             this.Text = "Select Folder";
             this.Size = new Size(332, 349);
 
-            folderTreeView = new DoubleBufferedTreeView
-            {
-                Size = new Size(290, 208),
-                Location = new Point(12, 55),
-                Dock = DockStyle.Fill,
-            };
-
             folderTreeView.AfterSelect += FolderTreeView_AfterSelect;
             folderTreeView.BeforeExpand += FolderTreeView_BeforeExpand;
 
@@ -77,7 +80,8 @@ namespace CustomFolder
             {
                 Text = "Ok",
                 Size = new Size(75, 23),
-                Location = new Point(147, 280)
+                Location = new Point(147, 280),
+                Anchor = (AnchorStyles)0xF
             };
             okButton.Click += OkButton_Click;
 
@@ -85,7 +89,8 @@ namespace CustomFolder
             {
                 Text = "Cancel",
                 Size = new Size(75, 23),
-                Location = new Point(227, 280)
+                Location = new Point(227, 280),
+                Anchor = (AnchorStyles)0xF
             };
             cancelButton.Click += (s, e) => this.Close();
 
@@ -93,7 +98,8 @@ namespace CustomFolder
             {
                 Text = "Make New Folder",
                 Size = new Size(120, 23),
-                Location = new Point(12, 280)
+                Location = new Point(12, 280),
+                Anchor = (AnchorStyles)0xF
             };
 
             feedbackLabel = new BufferedLabel
@@ -105,10 +111,18 @@ namespace CustomFolder
             };
 
             Controls.Add(folderTreeView);
+            Controls.Add(tableLayoutPanel);
+
+            tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 40F)); 
+            tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30F)); 
+            tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30F));
+
+            
+            tableLayoutPanel.Controls.Add(makeNewFolderButton, 0, 0);
+            tableLayoutPanel.Controls.Add(okButton, 1, 0);
+            tableLayoutPanel.Controls.Add(cancelButton, 2, 0);
+
             //Controls.Add(feedbackLabel);
-            //Controls.Add(okButton);
-            //Controls.Add(cancelButton);
-            //Controls.Add(makeNewFolderButton);
         }
 
         private void LoadDrives()
@@ -317,51 +331,24 @@ namespace CustomFolder
                 e.Graphics.DrawImage(expandCollapseImg, ptExpand);
 #endif
             }
-
-#if false
             /*--------- 2. Draw node text ---------*/
-            // Get the node's font (default if none is set)
-            Font nodeFont = e.Node.NodeFont ?? Font;
-
-            // Set the color for the text (highlight if selected)
-            Brush textBrush = SystemBrushes.WindowText;
-            SizeF stringSize = e.Graphics.MeasureString(
-                                e.Node.Text,
-                                e.Node.NodeFont ?? Font);
-            int
-                    stringWidth = Convert.ToInt32(Math.Ceiling(e.Graphics.MeasureString(
-                                e.Node.Text,
-                                e.Node.NodeFont ?? Font
-                                ).Width)),
-                    stringHeight = Convert.ToInt32(Math.Ceiling(e.Graphics.MeasureString(
-                                e.Node.Text,
-                                e.Node.NodeFont ?? Font
-                                ).Height));
-            switch (e.Node.Text)
-            {
-                case string s when s.Contains("Program Files"):
-                    // Debug.Assert(nodeRect.Width >= stringWidth, $"Should be >= {stringWidth} Is {nodeRect.Width}" );
-                    // Debug.Assert(nodeRect.Height >= stringHeight, $"Should be >= {stringHeight} Is {nodeRect.Height}" );
-                    break;
-            }
             if ((e.State & TreeNodeStates.Selected) != 0)
             {
-                textBrush = SystemBrushes.HighlightText;
-                e.Graphics.FillRectangle(SystemBrushes.Highlight, nodeRect); // Highlight background
+                e.Graphics.FillRectangle(SystemBrushes.Highlight, metrics.LabelBounds); // Highlight background
             }
-            nodeRect.Width = stringWidth;
-            nodeRect.Height = stringHeight;
-
             // Draw the text
             e.Graphics.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
-            e.Graphics.DrawString(e.Node.Text, nodeFont, textBrush, nodeRect);
+            e.Graphics.DrawString(
+                e.Node.Text, 
+                e.Node.NodeFont ?? Font, 
+                e.Node.IsSelected ? Brushes.White : SystemBrushes.ControlText, 
+                metrics.LabelBounds);
 
             // Draw focus rectangle if node is selected
             if ((e.State & TreeNodeStates.Focused) != 0)
             {
                 ControlPaint.DrawFocusRectangle(e.Graphics, e.Bounds);
             }
-#endif
 
 #if USE_FONTELLO
             #region L o c a l M e t h o d s
@@ -406,18 +393,10 @@ namespace CustomFolder
             #endregion L o c a l M e t h o d s
 #endif
         }
-        [DebuggerDisplay("{IconBounds.X} {IconBounds.Y} {IconBounds.Width} {IconBounds.Height}  {LabelBounds.X} {LabelBounds.Y} {LabelBounds.Width} {LabelBounds.Height} ")]
+        [DebuggerDisplay(
+            "{IconBounds.X} {IconBounds.Y} {IconBounds.Width} {IconBounds.Height}  {LabelBounds.X} {LabelBounds.Y} {LabelBounds.Width} {LabelBounds.Height} ")]
         class NodeMetrics
         {
-            /// <summary>
-            /// X Coodinate where hit begins
-            /// </summary>
-            //public int Indent { get; init; }
-            //public int PlusMinusIndent { get; init; }
-            //public int LabelIndent { get; init; }
-            //public int RightOfLabelIndent { get; init; }
-            //public int IconWidth { get; init; }
-            //public int TextWidth { get; init; }
             public Rectangle IconBounds { get; init; }
             public Rectangle LabelBounds { get; init; }
         }
@@ -451,12 +430,6 @@ namespace CustomFolder
                 Debug.Assert(iconWidth > 0);
                 return new NodeMetrics
                 {
-                    //Indent = indent,
-                    //PlusMinusIndent = plusMinusIndent,
-                    //LabelIndent = 0,
-                    //RightOfLabelIndent = 0,
-                    //IconWidth = iconWidth,
-                    //TextWidth = textWidth,
                     IconBounds = new Rectangle(
                         x: indent,
                         y: node.Bounds.Top,
